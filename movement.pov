@@ -1,69 +1,56 @@
 // ============================================================================
-//  movement.pov  -  "Feierabend"  (Abgabe Animation)
+//  movement.pov - "Feierabend" ~ Malte
 // ----------------------------------------------------------------------------
-//  Aufgabe:
-//    - ein Maennchen, das mit MERGE zusammengesetzt ist
-//    - es bewegt sich GENAU 4 Sekunden lang sichtbar durch eine Landschaft
-//      mit Baeumen
-//    - am Ende betritt es ein Haus mit Dach
-//    - eine Lichtquelle am Himmel, damit Schatten entstehen
+//  Was Herr Berners haben will:
+//    - ein Männchen, das mit MERGE zusammengebaut ist (nicht union, merge!!)
+//    - es läuft GENAU 4 Sekunden sichtbar durch eine Landschaft mit Bäumen
+//    - am Ende geht es in ein Haus mit Dach
+//    - eine Lichtquelle am Himmel, damit es Schatten gibt
 //
-//  Meine Idee: Sie joggt nach Feierabend ueber einen Trampelpfad durch die
-//  Wiese nach Hause. Kurz bevor sie ankommt, geht die Haustuer auf (drinnen
-//  wartet schon jemand, deshalb brennt auch Licht), und genau bei 4,0 s
-//  steht sie in der Tuer und geht rein.
+//  Die Story: Sie joggt nach Feierabend über einen Trampelpfad nach Hause.
+//  Kurz bevor sie ankommt geht die Tür auf (drinnen wartet wohl schon wer,
+//  deswegen ist auch Licht an) und bei genau 4,0 s steht sie in der Tür.
 //
-//  Timing:
-//    clock laeuft von 0 bis 1 und wird unten in Sekunden umgerechnet
-//    (clock * 4). Gerendert wird mit 100 Bildern bei 25 fps = genau 4 s.
-//    -> Einstellungen stehen in quickres.ini (Eintraege "Movement ...")
-//       bzw. in movement.ini.
+//  4 Sekunden = 100 Bilder bei 25 fps. Die Einstellungen dafür sind in der
+//  quickres.ini ("Movement ...") oder in der movement.ini, damit ich das nicht
+//  jedes mal neu eintippen muss.
 //
-//  Einheiten: 1 POV-Einheit = 1 Meter. y zeigt nach oben.
-//  Das Haus steht hinten bei z = 11..17, die Tuer zeigt nach -z (zur Kamera).
-//
-//  (Umlaute schreibe ich als ae/oe/ue, weil der POV-Ray-Editor unter Windows
-//   sonst manchmal Zeichensalat daraus macht.)
+//  1 POV-Einheit = 1 Meter, y ist oben. Das Haus steht hinten bei z = 11 bis 17
+//  und die Tür zeigt Richtung Kamera.
 // ============================================================================
 
-#version 3.7;
+#version 3.7; // Sagt POV-Ray welche Version, sonst meckert es rum
 
-// ----------------------------------------------------------------------------
-//  SCHALTER FUER DIE QUALITAET
-//  Mit #ifndef kann man die Werte auch von aussen setzen, z.B. in der ini:
-//  Declare=Weiche_Schatten=0
-// ----------------------------------------------------------------------------
-#ifndef (Weiche_Schatten) #declare Weiche_Schatten = 1; #end   // weiche Schattenkanten (area_light), ca. doppelte Renderzeit
-#ifndef (Kamera_Wahl)     #declare Kamera_Wahl     = 1; #end   // 1 = Hauptkamera (animiert), 2 = Uebersicht von oben, 3 = Nahaufnahme von der Seite
-#ifndef (Baum_Anzahl)     #declare Baum_Anzahl     = 260; #end // wie viele Baeume zufaellig gepflanzt werden
+// Hier sind so Schalter, damit Testbilder nicht ewig dauern
+// z.B. in der INI: Declare=Weiche_Schatten=0
+#ifndef (Weiche_Schatten) #declare Weiche_Schatten = 1; #end   // Wenn die Variablen noch nicht in einer INI etc. definiert wurden, werden die Variablen hier gesetzt.
+#ifndef (Kamera_Wahl)     #declare Kamera_Wahl     = 1; #end   // 1 = die normale Kamera die mitfährt, 2 = von oben, 3 = von der Seite ganz nah
+#ifndef (Baum_Anzahl)     #declare Baum_Anzahl     = 260; #end // Wie viele Bäume zufällig rumgepflanzt werden. Mehr = schöner aber langsamer
 
 
 global_settings {
-    assumed_gamma 1.0                    // lineare Helligkeit wie in der Vorlage
-    max_trace_level 8                    // genug fuer Fensterglas + Spiegelungen
+    assumed_gamma 1.0 // Hier gibt es eine gesetzte Helligkeit, Herr Berners das auch so machte. ~ Definitiv nicht Claude (Nein, ernsthaft nicht.)
+    max_trace_level 8 // Begrenzt wie oft ein einzelner Lichtstrahl verfolgt wird
 }
 
-// Etwas Grundhelligkeit, damit Schatten nicht komplett schwarz werden.
-// In echt kommt da Licht vom blauen Himmel an, das faken wir hiermit.
+// Es werde Licht damit die Schatten nicht zu schattig sind oder so
+// In echt kommt da Licht vom blauen Himmel an, das faked Claude hiermit
 #default { finish { ambient 0.06 diffuse 0.85 } }
 
 
 //-----------INCLUDES---------------------------------------------------------
 #include "colors.inc"
 #include "textures.inc"
-#include "functions.inc"        // fuer die Rausch-Funktion der Berge
+#include "functions.inc"        // fuer die Rausch-Funktion der Berge ; Malte hier, die Berge haben eine Rausch-Funktion? Naja, finden wir bald raus.
 
 
-//============================================================================
-//  ZEIT
-//============================================================================
-// Alles, was sich bewegt, haengt NUR von dieser Variable ab.
-// clock = 0 -> 0 s, clock = 1 -> 4 s.
-#declare Dauer    = 4;                       // Laenge der Animation in Sekunden
-#declare Sekunden = clock * Dauer;
 
-// Hilfsfunktion fuer "weiche" Uebergaenge (langsam anfangen, langsam aufhoeren).
-// Gibt 0 zurueck vor A, 1 nach B und dazwischen eine S-Kurve.
+// Ah, das ist was Claude mit Zeit wird in Sekunden umgerechnet
+#declare Dauer    = 4;                       // Länge der Animation in Sekunden
+#declare Sekunden = clock * Dauer; // Hier wird das ganze dann in Sekunden umgerechnet. Wieso genau schauen wir dann unten.
+
+
+// Die ganze Geschichte ist basically Anti-Aliasing aber für Schatten.
 #declare Weich = function(Wert, A, B) {
     select(Wert - A, 0,
         select(Wert - B,
@@ -72,21 +59,19 @@ global_settings {
 }
 
 
-//============================================================================
-//  DER WEG DES MAENNCHENS
-//============================================================================
-// Der Weg ist ein Spline: Ich gebe zu bestimmten Zeitpunkten (in Sekunden)
-// an, wo sie sein soll, und POV-Ray rechnet eine glatte Kurve dazwischen.
-// Die Punkte habe ich so ausgerechnet, dass zwischen je zwei Punkten
-// ungefaehr gleich viel Strecke liegt (ca. 1,43 m pro halbe Sekunde).
-// Dadurch laeuft sie gleichmaessig schnell und wird nicht ploetzlich
-// langsamer oder schneller. -> ca. 11,5 m in 4 s = 2,9 m/s = lockeres Joggen.
-// Die Punkte bei -0.5 s und 4.5 s sind nur da, damit die Kurve am Anfang
-// und am Ende sauber weiterlaeuft.
+//-----------DER WEG----------------------------------------------------------
+// Und hier ist das "wieso": Der Weg ist ein Spline. Da sagt man einfach
+// "bei Sekunde X soll sie hier sein" und POV-Ray macht selber eine schöne
+// Kurve dazwischen. Deswegen brauchen wir die Zeit in Sekunden.
+// Die Punkte sind so ausgerechnet, dass zwischen zwei Punkten immer ca.
+// gleich viel Strecke liegt (1,43 m pro halbe Sekunde), sonst rennt sie
+// plötzlich los und wird dann wieder langsam. Sieht komisch aus.
+// Macht 11,5 m in 4 s = 2,9 m/s, also so lockeres Joggen.
+// -0.5 und 4.5 sind nur dafür da, dass die Kurve an den Enden nicht rumspinnt.
 #declare Weg = spline {
     natural_spline
     -0.5, <-6.40, 0, 0.90>
-     0.0, <-5.20, 0, 1.60>      // Start: sie ist schon voll im Bild
+     0.0, <-5.20, 0, 1.60>      // Start, da ist sie schon ganz im Bild
      0.5, <-3.96, 0, 2.31>
      1.0, <-2.89, 0, 3.26>
      1.5, <-2.00, 0, 4.38>
@@ -94,58 +79,57 @@ global_settings {
      2.5, <-0.71, 0, 6.93>
      3.0, <-0.32, 0, 8.31>
      3.5, <-0.08, 0, 9.72>
-     4.0, < 0.00, 0, 11.15>     // Ende: genau in der Haustuer
+     4.0, < 0.00, 0, 11.15>     // Ende, genau in der Haustür
      4.5, < 0.00, 0, 12.60>
 }
 
-#declare Figur_Pos = Weg(Sekunden);
+#declare Figur_Pos = Weg(Sekunden); // Wo sie gerade ist
 
-// In welche Richtung schaut sie? Ich nehme einen Punkt kurz davor und kurz
-// danach auf dem Weg, die Differenz ist die Laufrichtung.
-// atan2(dx, dz) gibt den Winkel um die y-Achse (Figur ist nach +z gebaut).
+// Wohin guckt sie? Man nimmt einen Punkt kurz vorher und kurz nachher auf dem
+// Weg und zieht die voneinander ab, das ist dann die Laufrichtung.
+// atan2 macht daraus den Winkel um die y-Achse (die Figur ist nach +z gebaut)
 #declare Richtung   = Weg(Sekunden + 0.05) - Weg(Sekunden - 0.05);
 #declare Figur_Dreh = degrees(atan2(Richtung.x, Richtung.z));
 
-// Laufzyklus: Pro Schritt legt sie ca. 1 m zurueck, ein kompletter Zyklus
-// (links + rechts) sind also 2 m. Die Phase ist ein Winkel, der mit der
-// gelaufenen Strecke mitwaechst -> Beine und Arme schwingen mit sin(Phase).
-#declare Tempo      = 2.865;                        // m/s (siehe oben)
-#declare Schrittlaenge = 1.0;
+// Laufen: ein Schritt ist ca. 1 m, links + rechts zusammen also 2 m.
+// Phase ist ein Winkel der mitwächst während sie läuft, und Arme und Beine
+// schwingen dann mit sin(Phase) hin und her. Mathe ist doch zu was gut.
+#declare Tempo      = 2.865;                        // m/s, siehe oben
+#declare Schrittlaenge = 1.0;                       // 1 m pro Schritt
 #declare Phase      = Sekunden * Tempo / (2 * Schrittlaenge) * 360;
 
-#declare Bein_Schwung = 30;                         // max. Winkel der Beine in Grad
-#declare Arm_Schwung  = 35;                         // Arme schwingen gegengleich
+#declare Bein_Schwung = 30;                         // So weit gehen die Beine vor und zurück (Grad)
+#declare Arm_Schwung  = 35;                         // Und die Arme, gegengleich
 
-// Wenn ein Bein schraeg steht, ist die Huefte tiefer als bei geradem Bein.
-// Deshalb senke ich den Koerper um genau diesen Betrag (Kosinus), damit die
-// Fuesse nicht in der Luft haengen oder im Boden verschwinden.
-// Dazu ein kleiner Huepfer, weil man beim Joggen kurz "fliegt".
+// Wenn das Bein schräg ist, ist die Hüfte weiter unten als bei geradem Bein.
+// Deswegen geht der ganze Körper um genau so viel runter (Kosinus), sonst
+// schweben die Füße oder stecken im Boden.
+// Plus ein kleiner Hüpfer, weil man beim Joggen ja kurz fliegt
 #declare Bein_Winkel = Bein_Schwung * sin(radians(Phase));
 #declare Wippen      = 0.92 * (cos(radians(Bein_Winkel)) - 1)
                      + 0.035 * abs(sin(radians(Phase)));
 
 
-//============================================================================
-//  KAMERA
-//============================================================================
-// Kamera 1 faehrt langsam mit und schwenkt dabei vom Maennchen immer mehr
-// zum Haus rueber, damit man am Ende gut sieht, wie sie reingeht.
+//-----------KAMERA-----------------------------------------------------------
+// Kamera 1 fährt langsam mit und dreht sich dabei immer mehr zum Haus,
+// damit man am Ende sieht wie sie reingeht. Weich() sorgt dafür, dass das
+// nicht ruckelt.
 #declare Kamera_Pos = <-1.6, 1.55, -4.2> + <4.2, 0.9, 4.4> * Weich(Sekunden, 0, 4);
 
-// Blickpunkt: am Anfang die Figur (Brusthoehe), am Ende eine Mischung aus
-// Figur und Hausmitte, damit das Dach mit ins Bild kommt.
+// Wo die Kamera hinguckt: am Anfang auf sie (Brusthöhe), am Ende so halb
+// auf sie und halb aufs Haus, damit das Dach auch drauf ist
 #declare Blick_Mix  = 0.55 * Weich(Sekunden, 1.0, 4.0);
 #declare Kamera_Ziel = (Figur_Pos + <0, 1.1, 0>) * (1 - Blick_Mix) + <0, 2.6, 13> * Blick_Mix;
 
 #declare Kamera1 = camera {
     location Kamera_Pos
     look_at  Kamera_Ziel
-    angle 55
-    right x * image_width / image_height
+    angle 55                                   // Wie viel man sieht, so wie Zoom
+    right x * image_width / image_height       // Damit nichts gestaucht ist bei 16:9
 }
 
-// Kamera 2: Uebersicht von schraeg oben, fest. Gut zum Kontrollieren,
-// ob der Weg zwischen den Baeumen durchgeht.
+// Kamera 2: von schräg oben, bewegt sich nicht. Damit sieht man ob der Weg
+// wirklich zwischen den Bäumen durchgeht und nicht durch einen durch
 #declare Kamera2 = camera {
     location <-18, 22, -14>
     look_at  <-1, 0, 6>
@@ -153,8 +137,8 @@ global_settings {
     right x * image_width / image_height
 }
 
-// Kamera 3: Nahaufnahme von der Seite, faehrt neben ihr her. Damit habe
-// ich kontrolliert, ob Arme und Beine richtig schwingen.
+// Kamera 3: ganz nah von der Seite, fährt neben ihr her. Damit hat Claude
+// geguckt ob Arme und Beine richtig schwingen
 #declare Kamera3 = camera {
     location Figur_Pos + vrotate(<3.2, 1.0, 0>, y * Figur_Dreh)
     look_at  Figur_Pos + <0, 0.9, 0>
@@ -162,6 +146,7 @@ global_settings {
     right x * image_width / image_height
 }
 
+// Hier wird dann die Kamera genommen die oben bei Kamera_Wahl steht
 #if (Kamera_Wahl = 2)
     camera { Kamera2 }
 #elseif (Kamera_Wahl = 3)
@@ -171,44 +156,41 @@ global_settings {
 #end
 
 
-//============================================================================
-//  LICHT
-//============================================================================
-// Die Sonne - die Lichtquelle am Himmel. Sie steht weit weg, links hinter
-// der Kamera und ziemlich hoch (ca. 40 Grad ueber dem Horizont).
-// Deshalb wirft alles lange, schraege Schatten nach rechts hinten.
-// Warmes Licht, weil Feierabend = spaeter Nachmittag.
+//-----------LICHT------------------------------------------------------------
+// Die Sonne! Also die Lichtquelle am Himmel aus der Aufgabe.
+// Die ist weit weg, links hinter der Kamera und so 40 Grad hoch, deswegen
+// gibt es schöne schräge Schatten nach rechts hinten.
+// Leicht orange, weil Feierabend = später Nachmittag
 #declare Sonne_Pos = <-4000, 4300, -3200>;
 
 light_source {
     Sonne_Pos
     color rgb <1.00, 0.90, 0.74> * 1.4
     #if (Weiche_Schatten)
-        // Die echte Sonne ist eine Scheibe und kein Punkt, deshalb sind
-        // Schatten an den Kanten leicht unscharf. area_light verteilt das
-        // Licht auf eine Flaeche von 5x5 Lampen.
+        // Die echte Sonne ist ja kein Punkt sondern eine Scheibe, deswegen
+        // sind Schatten am Rand bisschen unscharf. area_light macht aus
+        // einer Lampe 5x5 Lampen nebeneinander, dann passiert das auch hier.
         area_light <120, 0, 0>, <0, 0, 120>, 5, 5
         adaptive 1
         jitter
         circular
         orient
     #end
-    // looks_like: so sieht man die Sonne auch, wenn sie im Bild ist
-    // (z.B. mit Kamera 2). Wirft selbst keinen Schatten.
+    // looks_like: damit man die Sonne auch sieht, wenn sie mal im Bild ist
+    // (z.B. bei Kamera 2). Die Kugel selber macht keinen Schatten.
     looks_like { sphere { 0, 90 pigment { rgb <1, 0.95, 0.8> } finish { emission 1 diffuse 0 } } }
 }
 
-// Schwaches, blaeuliches Licht von oben ohne Schatten = Himmelslicht.
-// Dadurch sind die Schatten leicht blau, wie draussen in echt.
+// Schwaches blaues Licht von oben ohne Schatten, quasi der Himmel.
+// Dadurch sind Schatten leicht bläulich, wie draußen halt auch
 light_source {
     <0, 10000, 0>
     color rgb <0.45, 0.55, 0.75> * 0.3
     shadowless
 }
 
-// Licht im Haus. Warm wie eine Gluehbirne. fade_distance/fade_power sorgen
-// dafuer, dass es wie eine echte Lampe mit der Entfernung schwaecher wird.
-// Man sieht es durch die Fenster und die offene Tuer.
+// Licht im Haus, warm wie eine Glühbirne. Mit fade_distance/fade_power wird
+// es weiter weg schwächer, wie eine echte Lampe. Sieht man durch Fenster und Tür
 light_source {
     <0, 2.4, 14.5>
     color rgb <1.0, 0.72, 0.42> * 2.2
@@ -217,25 +199,23 @@ light_source {
 }
 
 
-//============================================================================
-//  HIMMEL, WOLKEN, DUNST
-//============================================================================
-// Himmelskugel: am Horizont hell und warm, oben tiefblau.
+//-----------HIMMEL-----------------------------------------------------------
+// Himmelskugel: unten am Horizont hell und warm, oben dunkelblau
 sky_sphere {
     pigment {
         gradient y
         color_map {
-            [0.00 rgb <0.95, 0.82, 0.66>]
+            [0.00 rgb <0.95, 0.82, 0.66>]   // Horizont
             [0.10 rgb <0.70, 0.78, 0.88>]
             [0.35 rgb <0.30, 0.48, 0.80>]
-            [1.00 rgb <0.10, 0.22, 0.55>]
+            [1.00 rgb <0.10, 0.22, 0.55>]   // ganz oben
         }
     }
 }
 
-// Wolken: eine Ebene hoch oben mit bozo-Muster (wie der Horizont in der
-// Vorlage), aber mit Transparenz (rgbt), damit der Himmel durchschaut.
-// Sie ziehen mit der Zeit ein bisschen weiter.
+// Wolken: das ist die bozo-Ebene von Herr Berners' Vorlage, nur mit rgbt,
+// also durchsichtig an manchen Stellen, damit man den Himmel dazwischen sieht.
+// Die bewegen sich auch ein bisschen mit der Zeit
 plane { <0, 1, 0>, 1 hollow
     texture {
         pigment {
@@ -244,11 +224,11 @@ plane { <0, 1, 0>, 1 hollow
             octaves 6
             lambda 2.5
             color_map {
-                [0.00 rgbt <1, 1, 1, 1>]
+                [0.00 rgbt <1, 1, 1, 1>]              // komplett durchsichtig = keine Wolke
                 [0.50 rgbt <1, 1, 1, 1>]
-                [0.62 rgbt <1.0, 0.96, 0.90, 0.4>]
-                [0.80 rgbt <1.0, 0.94, 0.86, 0.0>]
-                [1.00 rgbt <0.62, 0.62, 0.70, 0.0>]
+                [0.62 rgbt <1.0, 0.96, 0.90, 0.4>]    // bisschen Wolke
+                [0.80 rgbt <1.0, 0.94, 0.86, 0.0>]    // richtige Wolke
+                [1.00 rgbt <0.62, 0.62, 0.70, 0.0>]   // dunkler Wolkenbauch
             }
             scale <1, 1, 1.6> * 0.9
             translate <Sekunden * 0.02, 0, 0>          // Wind
@@ -256,13 +236,13 @@ plane { <0, 1, 0>, 1 hollow
         finish { ambient 0 emission 0.95 diffuse 0 }
     }
     scale 900
-    no_shadow            // sonst verdecken die Wolken die Sonne
+    no_shadow            // Sonst blockieren die Wolken die Sonne und alles ist Schatten
 }
 
-// Bodennebel / Dunst. Macht weit entfernte Sachen (Berge, hintere Baeume)
-// blasser - so wirkt die Landschaft viel tiefer.
+// Nebel wie in der Vorlage, nur viel dünner. Weit entfernte Sachen (Berge,
+// hintere Bäume) werden blasser, dann sieht das viel tiefer aus
 fog {
-    fog_type   2
+    fog_type   2         // Bodennebel, unten dicker, oben dünner
     distance   1400
     color      rgb <0.80, 0.81, 0.85>
     fog_offset 0
@@ -271,11 +251,9 @@ fog {
 }
 
 
-//============================================================================
-//  BODEN
-//============================================================================
-// Wiese: zwei Muster uebereinander. Grosse Flecken (mal saftiger, mal
-// trockener) und kleine Beulen fuer die Struktur.
+//-----------BODEN------------------------------------------------------------
+// Wiese, zwei Muster drüber: große Flecken (mal grüner, mal trockener) und
+// kleine Beulen (bumps wie in der Vorlage)
 plane { <0, 1, 0>, 0
     texture {
         pigment {
@@ -285,7 +263,7 @@ plane { <0, 1, 0>, 0
                 [0.0 rgb <0.10, 0.24, 0.03>]
                 [0.4 rgb <0.17, 0.33, 0.05>]
                 [0.7 rgb <0.26, 0.38, 0.08>]
-                [1.0 rgb <0.36, 0.40, 0.14>]
+                [1.0 rgb <0.36, 0.40, 0.14>]   // trockene Stellen
             }
             scale 4
         }
@@ -294,10 +272,10 @@ plane { <0, 1, 0>, 0
     }
 }
 
-// Trampelpfad: Ganz viele flache Scheiben (Zylinder), die entlang des
-// Splines hintereinander gelegt werden. Zusammen sehen sie aus wie ein
-// ausgetretener Erdweg. Er liegt 3 mm ueber dem Gras, sonst flackern
-// die zwei Flaechen gegeneinander.
+// Der Trampelpfad. Das sind einfach ganz viele flache Zylinder hintereinander
+// auf dem Spline, zusammen sieht das aus wie ein Erdweg.
+// Der liegt 3 mm über dem Gras, sonst flackert das weil POV-Ray nicht weiß
+// was vorne ist (hat Claude so gesagt, ich glaub's mal)
 #declare Pfad_Textur = texture {
     pigment {
         granite
@@ -314,24 +292,24 @@ union {
     #declare Zeit = -3;
     #while (Zeit < 3.95)
         #declare P = Weg(Zeit);
-        // Breite schwankt etwas, ein Trampelpfad ist nie ganz gleich breit
+        // Breite ändert sich bisschen, ein echter Trampelpfad ist ja auch nicht überall gleich
         cylinder { P, P + <0, 0.003, 0>, 0.55 + 0.1 * sin(Zeit * 7) }
         #declare Zeit = Zeit + 0.04;
     #end
     texture { Pfad_Textur }
 }
 
-// Blumen auf der Wiese: kleine bunte Kugeln, zufaellig verteilt.
-// Neben dem Pfad lasse ich sie weg (sonst wuerde sie drueber joggen).
+// Blumen: kleine bunte Kugeln, zufällig verteilt.
+// Auf dem Pfad nicht, sonst trampelt sie die platt
 #declare Z_Blumen = seed(7);
-#declare Blumen_Farben = array[4] { rgb <0.9, 0.85, 0.2>, rgb <0.95, 0.95, 0.95>, rgb <0.7, 0.2, 0.6>, rgb <0.9, 0.3, 0.1> }
+#declare Blumen_Farben = array[4] { rgb <0.9, 0.85, 0.2>, rgb <0.95, 0.95, 0.95>, rgb <0.7, 0.2, 0.6>, rgb <0.9, 0.3, 0.1> } // gelb, weiß, lila, orange
 union {
     #declare i = 0;
     #while (i < 700)
         #declare BX = -14 + rand(Z_Blumen) * 24;
         #declare BZ = -4  + rand(Z_Blumen) * 16;
         #declare Farbe = Blumen_Farben[floor(rand(Z_Blumen) * 3.999)];
-        // Abstand zum Pfad grob pruefen: x-Abstand zum Weg auf gleicher Hoehe
+        // Grob gucken wie weit die Blume vom Weg weg ist, zu nah = keine Blume
         #if (abs(BX - Weg(min(4, max(0, (BZ - 1.6) / 9.55 * 4))).x) > 0.9)
             sphere { <BX, 0.05, BZ>, 0.018 pigment { Farbe } }
         #end
@@ -341,25 +319,24 @@ union {
 }
 
 
-//============================================================================
-//  BERGE IM HINTERGRUND
-//============================================================================
-// height_field = ein Gitter, jeder Punkt bekommt eine Hoehe zwischen 0 und 1.
-// Statt eines Bildes nehme ich eine Funktion:
-//   f_ridged_mf = Rauschen mit scharfen Graten (sieht aus wie Gebirge)
-//   Berg_Ring   = nur in einem Ring aussen herum, die Mitte bleibt flach
+//-----------BERGE------------------------------------------------------------
+// So, die Rausch-Funktion von oben. Aufgeklärt:
+// Ein height_field ist ein Gitter wo jeder Punkt eine Höhe zwischen 0 und 1
+// hat. Normal nimmt man da ein Bild, Claude hat aber eine Funktion genommen:
+//   f_ridged_mf = Rauschen mit spitzen Graten, sieht aus wie Gebirge
+//   Berg_Ring   = Berge nur in einem Ring außen rum, in der Mitte ist es flach
 #declare F_Grate    = function { f_ridged_mf(x*7, y*7, 0, 0.8, 2.1, 7, 0.9, 2.0, 2) }
-#declare F_Abstand  = function { sqrt(pow(x - 0.5, 2) + pow(y - 0.5, 2)) }
+#declare F_Abstand  = function { sqrt(pow(x - 0.5, 2) + pow(y - 0.5, 2)) }       // Abstand zur Mitte
 #declare Berg_Ring  = function { max(0, 1 - pow((F_Abstand(x, y, 0) - 0.40) / 0.11, 2)) }
 
 height_field {
     function 700, 700 { min(1, F_Grate(x, y, 0) * 0.55 * Berg_Ring(x, y, 0)) }
     smooth
-    translate <-0.5, 0, -0.5>
-    scale <6000, 480, 6000>
-    translate <0, -2, 0>                 // flacher Teil verschwindet unter der Wiese
+    translate <-0.5, 0, -0.5>            // In die Mitte schieben
+    scale <6000, 480, 6000>              // 6 km breit, bis 480 m hoch
+    translate <0, -2, 0>                 // Der flache Teil geht unter die Wiese, sonst flackert es
     texture {
-        pigment {                        // Farbe nach Hoehe: Wald -> Fels -> Schnee
+        pigment {                        // Farbe nach Höhe: Wald, dann Fels, dann Schnee
             gradient y
             turbulence 0.12
             color_map {
@@ -367,7 +344,7 @@ height_field {
                 [0.30 rgb <0.14, 0.22, 0.08>]
                 [0.42 rgb <0.33, 0.30, 0.25>]
                 [0.62 rgb <0.45, 0.42, 0.38>]
-                [0.70 rgb <0.95, 0.96, 1.00>]
+                [0.70 rgb <0.95, 0.96, 1.00>]   // ab hier Schnee
                 [1.00 rgb <1.00, 1.00, 1.00>]
             }
             scale 480
@@ -378,18 +355,15 @@ height_field {
 }
 
 
-//============================================================================
-//  BAEUME
-//============================================================================
-// Rinde: braun mit laenglichen Flecken und Beulen.
+//-----------BÄUME------------------------------------------------------------
+// Rinde, braun mit Streifen und Beulen
 #declare Rinde = texture {
     pigment { bozo color_map { [0 rgb <0.16, 0.10, 0.06>] [1 rgb <0.27, 0.19, 0.12>] } scale <0.05, 0.4, 0.05> }
     normal  { bumps 0.9 scale <0.03, 0.2, 0.03> }
 }
 
-// Nadelbaum: Stamm + 5 Kegel uebereinander. Jeder Kegel ist kleiner und
-// sitzt hoeher (gleiche Idee wie mein 3-Kegel-Baum aus der Vorlage,
-// nur mit mehr Stufen).
+// Tanne: Stamm und 5 Kegel übereinander, jeder kleiner und höher.
+// Ist eigentlich mein 3-Kegel-Baum aus der Vorlage, nur mit mehr Kegeln
 #macro Tanne(Farbe)
     union {
         cylinder { 0, y * 3, 0.16 texture { Rinde } }
@@ -400,14 +374,14 @@ height_field {
                        pigment { wrinkles color_map { [0 Farbe * 0.45] [0.6 Farbe] [1 Farbe * 1.3] } scale 0.35 }
                        normal  { wrinkles 1.2 scale 0.25 }
                    }
-                   rotate y * Stufe * 37 }       // jede Stufe verdreht, damit das Muster nicht gleich aussieht
+                   rotate y * Stufe * 37 }       // Jede Stufe bisschen gedreht, sonst sieht das Muster überall gleich aus
             #local Stufe = Stufe + 1;
         #end
     }
 #end
 
-// Laubbaum: Stamm + Krone aus einem "blob". Ein blob verschmilzt mehrere
-// Kugeln zu einer weichen Form -> sieht eher nach Baumkrone aus.
+// Laubbaum: Stamm und die Krone ist ein blob. Ein blob sind mehrere Kugeln
+// die ineinander verschmelzen wie Knete, sieht dann aus wie eine Baumkrone
 #macro Laubbaum(Farbe, Startwert)
     #local Z = seed(Startwert);
     union {
@@ -427,16 +401,16 @@ height_field {
     }
 #end
 
-// Ein paar Sorten nur EINMAL bauen und dann oft kopieren - das spart
-// Rechenzeit beim Parsen.
+// Jede Sorte wird nur EINMAL gebaut und dann kopiert, das geht viel schneller
+// als jeden Baum neu zu bauen
 #declare Tanne1 = Tanne(rgb <0.05, 0.18, 0.06>)
 #declare Tanne2 = Tanne(rgb <0.07, 0.22, 0.08>)
 #declare Laub1  = Laubbaum(rgb <0.16, 0.30, 0.06>, 11)
 #declare Laub2  = Laubbaum(rgb <0.24, 0.33, 0.07>, 22)
-#declare Laub3  = Laubbaum(rgb <0.40, 0.30, 0.08>, 33)   // faengt schon an, herbstlich zu werden
+#declare Laub3  = Laubbaum(rgb <0.40, 0.30, 0.08>, 33)   // Der wird schon herbstlich
 
-// Diese Baeume setze ich per Hand direkt an den Pfad, damit sie auf jeden
-// Fall im Bild sind und sie wirklich "zwischen Baeumen durch" laeuft.
+// Die hier stehen per Hand direkt am Weg, damit sie auch wirklich
+// "durch die Bäume" läuft wie in der Aufgabe
 object { Laub1  scale 0.9  rotate y * 30  translate <-7.5, 0,  5.0> }
 object { Tanne1 scale 1.0  rotate y * 10  translate <-4.6, 0,  7.2> }
 object { Laub2  scale 0.8  rotate y * 200 translate < 3.2, 0,  4.8> }
@@ -447,20 +421,19 @@ object { Tanne2 scale 1.1  rotate y * 150 translate <-7.0, 0, 12.5> }
 object { Laub1  scale 1.0  rotate y * 300 translate < 6.5, 0, 17.0> }
 object { Laub2  scale 1.1  rotate y * 20  translate <-5.5, 0, 19.0> }
 
-// Der Rest wird zufaellig gepflanzt. Gleicher Startwert (seed) = in jedem
-// Bild derselbe Wald. Baeume, die auf dem Pfad, im Haus oder vor der
-// Kamera landen wuerden, werden einfach uebersprungen.
+// Der Rest wird zufällig verteilt. Weil der seed immer gleich ist, ist es in
+// jedem Bild der gleiche Wald (sonst würden die Bäume jedes Bild rumspringen, lol).
+// Bäume die auf dem Weg, im Haus oder vor der Kamera landen, werden übersprungen
 #declare Z_Baeume = seed(2026);
 #declare i = 0;
 #while (i < Baum_Anzahl)
-    #declare BX = -80 + rand(Z_Baeume) * 160;
-    #declare BZ = -30 + rand(Z_Baeume) * 130;
-    #declare Sorte = rand(Z_Baeume);
-    #declare Gr    = 0.75 + rand(Z_Baeume) * 0.6;
-    #declare Dr    = rand(Z_Baeume) * 360;
+    #declare BX = -80 + rand(Z_Baeume) * 160;       // x-Position
+    #declare BZ = -30 + rand(Z_Baeume) * 130;       // z-Position
+    #declare Sorte = rand(Z_Baeume);                // welcher Baum
+    #declare Gr    = 0.75 + rand(Z_Baeume) * 0.6;   // wie groß
+    #declare Dr    = rand(Z_Baeume) * 360;          // wie gedreht
 
-    // Freie Zone: der ganze Bereich vor dem Haus, in dem Pfad, Kamera und
-    // Haus sind. Ausserhalb davon darf ein Baum stehen.
+    // Freie Zone vorm Haus, da sind Weg, Kamera und Haus. Nur außerhalb davon Bäume
     #declare Frei = (BX > -12 & BX < 11 & BZ > -12 & BZ < 22);
     #if (!Frei)
         object {
@@ -479,20 +452,18 @@ object { Laub2  scale 1.1  rotate y * 20  translate <-5.5, 0, 19.0> }
 #end
 
 
-//============================================================================
-//  DAS HAUS
-//============================================================================
-// Grundriss 8 m x 6 m, Waende 3 m hoch, Satteldach.
-// Vorderwand (mit Tuer) bei z = 11, Rueckwand bei z = 17.
+//-----------DAS HAUS---------------------------------------------------------
+// 8 m x 6 m, Wände 3 m hoch, Satteldach.
+// Vorne (mit Tür) ist bei z = 11, hinten bei z = 17
 #declare Wand_Dicke = 0.2;
 #declare Tuer_Breite = 1.1;
 #declare Tuer_Hoehe  = 2.1;
 
-#declare Putz = texture {                        // heller Hausputz, leicht fleckig
+#declare Putz = texture {                        // Heller Putz, bisschen fleckig
     pigment { granite color_map { [0 rgb <0.88, 0.84, 0.76>] [1 rgb <0.95, 0.92, 0.86>] } scale 0.5 }
     normal  { granite 0.15 scale 0.02 }
 }
-#declare Holz = texture {                        // dunkles Holz fuer Tuer, Rahmen, Balken
+#declare Holz = texture {                        // Dunkles Holz für Tür, Rahmen und so
     pigment {
         wood turbulence 0.1
         color_map { [0 rgb <0.25, 0.13, 0.06>] [0.6 rgb <0.35, 0.19, 0.09>] [1 rgb <0.22, 0.11, 0.05>] }
@@ -501,7 +472,7 @@ object { Laub2  scale 1.1  rotate y * 20  translate <-5.5, 0, 19.0> }
     normal { wood 0.3 scale 0.05 rotate x * 90 }
     finish { specular 0.2 roughness 0.05 }
 }
-#declare Dachziegel = texture {                  // rote Ziegel: gradient gibt die Ziegelreihen
+#declare Dachziegel = texture {                  // Rote Ziegel, gradient macht die Reihen
     pigment {
         gradient z
         color_map {
@@ -513,13 +484,13 @@ object { Laub2  scale 1.1  rotate y * 20  translate <-5.5, 0, 19.0> }
     }
     normal { gradient z 0.8 scale 0.3 }
 }
-#declare Glas = texture {                         // Fensterglas: fast durchsichtig, spiegelt etwas
+#declare Glas = texture {                         // Fensterglas, fast ganz durchsichtig und spiegelt bisschen
     pigment { rgbf <0.85, 0.9, 0.9, 0.85> }
     finish  { ambient 0 diffuse 0.1 specular 1 roughness 0.001 reflection 0.15 }
 }
 
-// Fenster-Loch + Glas + Rahmen mit Fensterkreuz. Wird vorne und an der
-// Seite benutzt. Mitte bei (0,0), Groesse 1,0 x 1,2 m.
+// Fenster: das Loch, das Glas und der Rahmen mit Kreuz. Wird vorne und an
+// der Seite benutzt. Mitte ist bei (0,0), 1,0 x 1,2 m groß
 #declare Fenster_Loch = box { <-0.5, -0.6, -0.5>, <0.5, 0.6, 0.5> }
 #declare Fenster = union {
     box { <-0.5, -0.6, -0.01>, <0.5, 0.6, 0.01> texture { Glas } }
@@ -537,33 +508,33 @@ object { Laub2  scale 1.1  rotate y * 20  translate <-5.5, 0, 19.0> }
     box { <-0.62, -0.72, -0.18>, <0.62, -0.65, 0.02> texture { pigment { rgb 0.6 } } }
 }
 
-// Blumenkasten mit roten Geranien unter dem Fenster - einfach, weil's schoen ist.
+// Blumenkasten mit Geranien, einfach weil's schön ist. Oma-Style
 #declare Blumenkasten = union {
     box { <-0.5, -0.12, -0.1>, <0.5, 0.05, 0.1> texture { Holz } }
     #local Z_Geranie = seed(3);
     #local j = 0;
     #while (j < 14)
         sphere { <-0.42 + j * 0.065, 0.08 + rand(Z_Geranie) * 0.06, (rand(Z_Geranie) - 0.5) * 0.12>, 0.05
-                 pigment { rgb <0.8, 0.05, 0.08> } }
+                 pigment { rgb <0.8, 0.05, 0.08> } }    // rote Blüte
         sphere { <-0.42 + j * 0.065, 0.04, (rand(Z_Geranie) - 0.5) * 0.14>, 0.05
-                 pigment { rgb <0.1, 0.3, 0.05> } }
+                 pigment { rgb <0.1, 0.3, 0.05> } }     // grüne Blätter
         #local j = j + 1;
     #end
 }
 
-// --- Waende: aussen ein grosser Kasten, innen einer abziehen -> hohl.
-//     Dann Tuer und Fenster rausschneiden.
+// Wände: ein großer Kasten, davon wird innen ein kleinerer abgezogen, dann ist
+// er hohl. Dann noch Tür und Fenster rausschneiden (difference)
 difference {
     box { <-4, 0, 11>, <4, 3, 17> }
     box { <-4 + Wand_Dicke, 0.01, 11 + Wand_Dicke>, <4 - Wand_Dicke, 3.1, 17 - Wand_Dicke> }
-    box { <-Tuer_Breite / 2, 0.02, 10.9>, <Tuer_Breite / 2, Tuer_Hoehe, 11.5> }     // Tuer
+    box { <-Tuer_Breite / 2, 0.02, 10.9>, <Tuer_Breite / 2, Tuer_Hoehe, 11.5> }     // Tür
     object { Fenster_Loch translate <-2.3, 1.6, 11> }                                // Fenster vorne links
     object { Fenster_Loch translate < 2.3, 1.6, 11> }                                // Fenster vorne rechts
-    object { Fenster_Loch rotate y * 90 translate <-4, 1.6, 14> }                    // Fenster Seite
+    object { Fenster_Loch rotate y * 90 translate <-4, 1.6, 14> }                    // Fenster an der Seite
     texture { Putz }
 }
 
-// Sockel unten aus Stein, damit das Haus nicht so "aufgestellt" aussieht
+// Sockel aus Stein unten rum, sonst sieht das Haus aus wie hingestellt
 difference {
     box { <-4.05, 0, 10.95>, <4.05, 0.35, 17.05> }
     box { <-3.9, -0.1, 11.1>, <3.9, 0.5, 16.9> }
@@ -571,20 +542,20 @@ difference {
     texture { pigment { granite color_map { [0 rgb 0.25] [1 rgb 0.45] } scale 0.2 } normal { granite 0.4 scale 0.1 } }
 }
 
-// Fussboden innen (Holzdielen) und eine Stufe vor der Tuer
+// Holzboden drinnen und eine Stufe vor der Tür
 box { <-3.8, 0, 11.2>, <3.8, 0.03, 16.8> texture { Holz } }
 box { <-0.9, 0, 10.55>, <0.9, 0.12, 11.02> texture { pigment { rgb 0.5 } normal { granite 0.3 scale 0.1 } } }
-// Fussmatte
+// Fußmatte (Schuhe abtreten!!)
 box { <-0.45, 0.12, 10.6>, <0.45, 0.135, 10.98> texture { pigment { rgb <0.3, 0.22, 0.12> } normal { bumps 1 scale 0.01 } } }
 
-// Fenster einsetzen
+// Fenster und Blumenkästen reinsetzen
 object { Fenster translate <-2.3, 1.6, 11.0> }
 object { Fenster translate < 2.3, 1.6, 11.0> }
 object { Fenster rotate y * 90 translate <-4.0, 1.6, 14.0> }
 object { Blumenkasten translate <-2.3, 0.95, 10.82> }
 object { Blumenkasten translate < 2.3, 0.95, 10.82> }
 
-// Tuerrahmen
+// Türrahmen
 union {
     box { <-Tuer_Breite / 2 - 0.1, 0, 10.93>, <-Tuer_Breite / 2, Tuer_Hoehe + 0.1, 11.05> }
     box { < Tuer_Breite / 2, 0, 10.93>, < Tuer_Breite / 2 + 0.1, Tuer_Hoehe + 0.1, 11.05> }
@@ -592,41 +563,41 @@ union {
     texture { Holz }
 }
 
-// --- Die Tuer. Sie haengt links an der Angel und geht nach innen auf.
-// Zwischen 2,3 s und 3,2 s schwingt sie von 0 auf 100 Grad auf.
-// Drehen um die y-Achse geht immer um den Ursprung -> Tuer so bauen, dass
-// die Angel im Ursprung liegt, drehen, DANN an die richtige Stelle schieben.
+// Die Tür. Hängt links an der Angel und geht nach innen auf, zwischen 2,3 s
+// und 3,2 s von 0 auf 100 Grad.
+// Wichtig: rotate dreht IMMER um den Nullpunkt. Also Tür so bauen, dass die
+// Angel im Nullpunkt ist, drehen, und DANN erst hinschieben. Sonst dreht sich
+// die Tür irgendwo durch die Gegend
 #declare Tuer_Winkel = 100 * Weich(Sekunden, 2.3, 3.2);
 union {
     box { <0, 0, 0>, <Tuer_Breite - 0.02, Tuer_Hoehe - 0.02, 0.06> texture { Holz } }
-    // zwei Kassetten, damit sie nicht so flach aussieht
+    // Zwei Kassetten, damit die Tür nicht so langweilig flach ist
     box { <0.15, 0.25, -0.01>, <Tuer_Breite - 0.17, 0.95, 0.0> texture { Holz } }
     box { <0.15, 1.15, -0.01>, <Tuer_Breite - 0.17, 1.85, 0.0> texture { Holz } }
-    // Tuerklinke aus Messing
+    // Türklinke aus Messing
     cylinder { <Tuer_Breite - 0.15, 1.0, -0.06>, <Tuer_Breite - 0.15, 1.0, 0.0>, 0.02 texture { Brass_Metal } }
     box { <Tuer_Breite - 0.3, 0.98, -0.07>, <Tuer_Breite - 0.15, 1.02, -0.05> texture { Brass_Metal } }
-    rotate y * -Tuer_Winkel                          // minus = nach innen (+z)
+    rotate y * -Tuer_Winkel                          // Minus = nach innen
     translate <-Tuer_Breite / 2 + 0.01, 0.02, 11.0>
 }
 
-// Hausnummer "4" - wegen der 4 Sekunden :)
+// Hausnummer 4, wegen den 4 Sekunden :)
 text { ttf "cyrvetic.ttf" "4" 0.02, 0
        scale 0.4 translate <0.75, 1.75, 10.97>
        texture { pigment { rgb 0.05 } finish { specular 0.5 } } }
 
-// Lampe neben der Tuer (leuchtet nur, beleuchtet aber nichts - reine Deko)
+// Lampe neben der Tür. Leuchtet, macht aber kein echtes Licht, ist nur Deko
 union {
     box { <-0.06, -0.12, 0>, <0.06, 0.12, -0.06> pigment { rgb 0.1 } }
     sphere { <0, 0, -0.14>, 0.08 pigment { rgb <1, 0.85, 0.6> } finish { emission 1 } }
     translate <-1.0, 2.35, 10.98>
 }
 
-// --- Dach
-// Giebeldreiecke vorne und hinten: ein prism ist eine Flaeche, die in die
-// Hoehe gezogen wird. Die Punkte sind (Hoehe, z), die Extrusion geht
-// erst entlang y und wird dann mit rotate z*90 in die x-Richtung gekippt.
-// Nach der Drehung zeigt die alte y-Achse nach -x, also -4..4 -> 4..-4.
-#declare Dach_First = 5.0;                       // Hoehe des Dachfirsts
+// Dach!
+// Die Dreiecke vorne und hinten (Giebel) sind ein prism, also eine Form die
+// in die Länge gezogen wird. Die Punkte sind (Höhe, z). Gezogen wird erst
+// entlang y und mit rotate z*90 wird das dann in x-Richtung gekippt.
+#declare Dach_First = 5.0;                       // Wie hoch die Dachspitze ist
 prism {
     linear_sweep
     -4, 4, 4
@@ -635,17 +606,17 @@ prism {
     texture { Putz }
 }
 
-// Die zwei Dachflaechen sind flache Kaesten, die schraeg gekippt werden.
-// Neigung: 2 m Hoehe auf 3 m Breite -> atan(2/3) = ca. 33,7 Grad.
-// Laenge 4 m (damit das Dach vorne und hinten uebersteht).
+// Die zwei Dachflächen sind flache Kästen die schräg gekippt werden.
+// Wie schräg: 2 m hoch auf 3 m breit, atan(2/3) = ca. 33,7 Grad. Danke Mathe-Unterricht
+// 4,2 m lang, damit das Dach vorne und hinten bisschen übersteht
 #declare Dach_Neigung = degrees(atan2(Dach_First - 3.0, 3.0));
 #declare Dachflaeche = box { <-4.5, 0, 0>, <4.5, 0.15, 4.2> texture { Dachziegel } }
-object { Dachflaeche scale <1, 1, -1> rotate x * -Dach_Neigung translate <0, Dach_First, 14> }   // vordere Haelfte
-object { Dachflaeche rotate x *  Dach_Neigung translate <0, Dach_First, 14> }                  // hintere Haelfte
-// Firstbalken oben drauf, damit keine Luecke zwischen den Flaechen bleibt
+object { Dachflaeche scale <1, 1, -1> rotate x * -Dach_Neigung translate <0, Dach_First, 14> }   // vordere Hälfte
+object { Dachflaeche rotate x *  Dach_Neigung translate <0, Dach_First, 14> }                  // hintere Hälfte
+// Balken oben auf der Spitze, damit da keine Lücke ist
 cylinder { <-4.5, Dach_First + 0.1, 14>, <4.5, Dach_First + 0.1, 14>, 0.12 texture { Dachziegel } }
 
-// Schornstein auf der hinteren Dachhaelfte
+// Schornstein hinten aufm Dach, mit Ziegelmuster (brick)
 union {
     box { <-0.35, 0, -0.35>, <0.35, 2.4, 0.35> }
     box { <-0.42, 2.4, -0.42>, <0.42, 2.55, 0.42> }
@@ -656,17 +627,17 @@ union {
     translate <2.2, 3.8, 15.2>
 }
 
-// Rauch aus dem Schornstein: 8 Wolken, die aufsteigen, groesser werden und
-// dabei verblassen. Jede Wolke hat ein eigenes "Alter" (0..1), das mit der
-// Zeit hochzaehlt und bei 1 wieder von vorne anfaengt (mod).
+// Rauch aus dem Schornstein (jemand kocht wohl schon). 8 Wölkchen die hochsteigen,
+// größer werden und verblassen. Jede hat ihr eigenes "Alter" zwischen 0 und 1,
+// das mit der Zeit hochzählt und mit mod() bei 1 wieder bei 0 anfängt
 #declare w = 0;
 #while (w < 8)
     #declare Alter = mod(Sekunden * 0.3 + w / 8, 1);
     sphere { 0, 1
-        scale 0.25 + Alter * 0.9
-        translate <2.2 + Alter * 1.8, 6.5 + Alter * 4.0, 15.2 + Alter * 0.6>   // der Wind treibt ihn nach rechts
+        scale 0.25 + Alter * 0.9                    // wird größer je älter
+        translate <2.2 + Alter * 1.8, 6.5 + Alter * 4.0, 15.2 + Alter * 0.6>   // Wind pustet ihn nach rechts
         texture {
-            pigment { rgbt <0.85, 0.85, 0.88, 0.55 + 0.45 * Alter> }
+            pigment { rgbt <0.85, 0.85, 0.88, 0.55 + 0.45 * Alter> }         // und durchsichtiger
             finish  { ambient 0.3 diffuse 0.6 }
         }
         no_shadow
@@ -674,10 +645,10 @@ union {
     #declare w = w + 1;
 #end
 
-// Ein kleiner Tisch drinnen, damit man durch Tuer und Fenster was sieht
+// Kleiner Tisch drinnen, damit man durch die Tür auch was sieht
 union {
-    box { <-0.6, 0.72, -0.4>, <0.6, 0.77, 0.4> }
-    cylinder { <-0.5, 0, -0.3>, <-0.5, 0.72, -0.3>, 0.03 }
+    box { <-0.6, 0.72, -0.4>, <0.6, 0.77, 0.4> }                 // Platte
+    cylinder { <-0.5, 0, -0.3>, <-0.5, 0.72, -0.3>, 0.03 }       // 4 Beine
     cylinder { < 0.5, 0, -0.3>, < 0.5, 0.72, -0.3>, 0.03 }
     cylinder { <-0.5, 0, 0.3>, <-0.5, 0.72, 0.3>, 0.03 }
     cylinder { < 0.5, 0, 0.3>, < 0.5, 0.72, 0.3>, 0.03 }
@@ -686,52 +657,47 @@ union {
 }
 
 
-//============================================================================
-//  DAS MAENNCHEN  (mit merge kombiniert!)
-//============================================================================
-// merge statt union: Bei merge werden die Teile zu EINEM Koerper
-// verschmolzen, die inneren Flaechen, wo sich zwei Teile ueberschneiden,
-// fallen weg. Bei undurchsichtigen Objekten sieht man keinen Unterschied,
-// aber wenn man es mal durchsichtig macht, sieht man bei union alle
-// Ueberschneidungen und bei merge nicht. (Kann man testen: bei der Haut
-// z.B. rgbf <1,0.8,0.7,0.6> einsetzen.)
+//-----------DAS MÄNNCHEN (mit merge!)-----------------------------------------
+// Warum merge und nicht union: Bei merge wird alles zu EINEM Körper
+// verschmolzen und die Flächen innen drin, wo sich zwei Teile überschneiden,
+// sind weg. Wenn alles undurchsichtig ist sieht man keinen Unterschied, aber
+// wenn man es durchsichtig macht sieht man bei union alle Überschneidungen und
+// bei merge nicht. (Kann man testen, bei Haut z.B. rgbf <1,0.8,0.7,0.6> reinmachen)
 //
-// Aufbau: Die Figur steht im Ursprung, die Fuesse bei y = 0, sie schaut
-// nach +z. Groesse ca. 1,75 m.
-// Beine und Arme sind eigene merges, die sich an Huefte/Schulter drehen.
-// Der Unterschenkel dreht sich zusaetzlich am Knie, der Unterarm am
-// Ellenbogen. Trick dabei: jedes Teil so bauen, dass das Gelenk im
-// Ursprung liegt, dann drehen, dann an die richtige Stelle schieben.
+// Sie steht im Nullpunkt, Füße bei y = 0, guckt nach +z, ca. 1,75 m groß.
+// Arme und Beine sind eigene merges die sich an Hüfte und Schulter drehen.
+// Unterschenkel dreht sich dann nochmal am Knie und Unterarm am Ellenbogen.
+// Gleicher Trick wie bei der Tür: Gelenk in den Nullpunkt, drehen, hinschieben
 
 #declare Haut   = texture { pigment { rgb <0.85, 0.62, 0.48> } finish { specular 0.1 roughness 0.05 } }
-#declare Shirt  = texture { pigment { rgb <0.05, 0.55, 0.60> } normal { bumps 0.1 scale 0.01 } }   // tuerkis
+#declare Shirt  = texture { pigment { rgb <0.05, 0.55, 0.60> } normal { bumps 0.1 scale 0.01 } }   // türkis
 #declare Hose   = texture { pigment { rgb <0.08, 0.10, 0.22> } normal { bumps 0.15 scale 0.005 } } // dunkle Jogginghose
-#declare Schuh  = texture { pigment { rgb 0.92 } finish { specular 0.3 } }                          // weisse Sneaker
-#declare Haare  = texture { pigment { rgb <0.30, 0.16, 0.07> } normal { wrinkles 0.4 scale 0.02 } finish { specular 0.3 roughness 0.02 } }
+#declare Schuh  = texture { pigment { rgb 0.92 } finish { specular 0.3 } }                          // weiße Sneaker
+#declare Haare  = texture { pigment { rgb <0.30, 0.16, 0.07> } normal { wrinkles 0.4 scale 0.02 } finish { specular 0.3 roughness 0.02 } } // braun, glänzt bisschen
 
-// Bein: Huefte im Ursprung, haengt nach unten.
-//   Huefte = Winkel am Hueftgelenk (negativ = Bein nach vorne)
-//   Knie   = Beugung im Knie (positiv = Unterschenkel nach hinten)
+// Ein Bein. Die Hüfte ist im Nullpunkt, das Bein hängt nach unten.
+//   Huefte = Winkel an der Hüfte (minus = Bein nach vorne)
+//   Knie   = wie doll das Knie gebeugt ist (plus = Unterschenkel nach hinten)
 #macro Bein(Huefte, Knie)
     merge {
         cylinder { <0, 0, 0>, <0, -0.44, 0>, 0.075 texture { Hose } }      // Oberschenkel
         sphere   { <0, -0.44, 0>, 0.068 texture { Hose } }                 // Knie
-        merge {                                                            // Unterschenkel + Fuss
+        merge {                                                            // Unterschenkel und Fuß
             cylinder { <0, 0, 0>, <0, -0.42, 0>, 0.062 texture { Hose } }
-            box { <-0.055, -0.475, -0.06>, <0.055, -0.40, 0.18> texture { Schuh } }  // Schuh zeigt nach vorne (+z)
-            rotate x * Knie
-            translate <0, -0.44, 0>
+            box { <-0.055, -0.475, -0.06>, <0.055, -0.40, 0.18> texture { Schuh } }  // Schuh zeigt nach vorne
+            rotate x * Knie              // erst am Knie drehen
+            translate <0, -0.44, 0>      // dann ans Knie hinschieben
         }
-        rotate x * Huefte
+        rotate x * Huefte                // und das ganze Bein an der Hüfte drehen
     }
 #end
 
-// Arm: Schulter im Ursprung.
-//   Schulter  = Schwung nach vorne/hinten
-//   Ellenbogen = Beugung (negativ = Unterarm nach vorne, beim Joggen ~70 Grad)
+// Ein Arm, gleiches Prinzip. Schulter im Nullpunkt.
+//   Schulter   = vor und zurück schwingen
+//   Ellenbogen = Beugung (minus = Unterarm nach vorne, beim Joggen so 70 Grad)
 #macro Arm(Schulter, Ellenbogen)
     merge {
-        cylinder { <0, 0, 0>, <0, -0.29, 0>, 0.05 texture { Shirt } }      // Oberarm (T-Shirt)
+        cylinder { <0, 0, 0>, <0, -0.29, 0>, 0.05 texture { Shirt } }      // Oberarm (mit T-Shirt drüber)
         sphere   { <0, -0.29, 0>, 0.045 texture { Haut } }                 // Ellenbogen
         merge {
             cylinder { <0, 0, 0>, <0, -0.25, 0>, 0.04 }                     // Unterarm
@@ -745,39 +711,39 @@ union {
 #end
 
 #macro Maennchen(P)
-    // P = Phase in Grad. Linkes und rechtes Bein sind um 180 Grad versetzt.
+    // P ist die Phase in Grad von oben. Links und rechts sind 180 Grad versetzt
     #local S  = sin(radians(P));
     #local C  = cos(radians(P));
-    // Knie beugt sich stark, wenn das Bein nach vorne schwingt (C > 0),
-    // und ist fast gerade, wenn das Bein hinten auf dem Boden steht.
+    // Das Knie knickt stark ein wenn das Bein nach vorne schwingt (C > 0),
+    // und ist fast gerade wenn das Bein hinten auf dem Boden steht
     #local Knie_L = 8 + 55 * max(0,  C);
     #local Knie_R = 8 + 55 * max(0, -C);
     merge {
-        // --- Beine (Hueften 10 cm links/rechts der Mitte, 0,92 m hoch)
+        // Beine, Hüften 10 cm neben der Mitte und 0,92 m hoch
         object { Bein(-Bein_Schwung * S, Knie_L) translate <-0.10, 0.92, 0> }
         object { Bein( Bein_Schwung * S, Knie_R) translate < 0.10, 0.92, 0> }
 
-        // --- Becken und Oberkoerper (gestauchte Kugeln = Ellipsoide)
+        // Becken und Oberkörper, das sind einfach platt gedrückte Kugeln
         sphere { 0, 1 scale <0.18, 0.12, 0.11> translate y * 0.95 texture { Hose } }
         sphere { 0, 1 scale <0.20, 0.30, 0.12> translate y * 1.22 texture { Shirt } }
 
-        // --- Arme: gegengleich zu den Beinen (linker Arm vorne, wenn rechtes Bein vorne)
+        // Arme, andersrum als die Beine (rechtes Bein vorne = linker Arm vorne)
         object { Arm( Arm_Schwung * S, -75) translate <-0.23, 1.43, 0> }
         object { Arm(-Arm_Schwung * S, -75) translate < 0.23, 1.43, 0> }
 
-        // --- Hals und Kopf
+        // Hals und Kopf
         cylinder { <0, 1.45, 0>, <0, 1.56, 0>, 0.05 texture { Haut } }
         merge {
             sphere { 0, 0.115 scale <1, 1.12, 1> texture { Haut } }                  // Kopf
-            sphere { <0, 0.025, -0.018>, 0.118 scale <1, 1.12, 1> texture { Haare } } // Haare: gleiche Kugel, nach hinten-oben verschoben
-            // Pferdeschwanz: 3 Kugeln, die beim Laufen hin und her wippen
+            sphere { <0, 0.025, -0.018>, 0.118 scale <1, 1.12, 1> texture { Haare } } // Haare = gleiche Kugel, nur bisschen nach hinten oben
+            // Pferdeschwanz aus 3 Kugeln, der wippt beim Laufen
             merge {
                 sphere { <0, 0,     -0.06>, 0.045 }
                 sphere { <0, -0.07, -0.08>, 0.040 }
                 sphere { <0, -0.14, -0.08>, 0.030 }
                 texture { Haare }
-                rotate x * (15 + 10 * sin(radians(P * 2)))       // wippt doppelt so schnell wie die Schritte
-                rotate z * (12 * S)                              // und schlenkert seitlich
+                rotate x * (15 + 10 * sin(radians(P * 2)))       // hoch und runter, doppelt so schnell wie die Schritte
+                rotate z * (12 * S)                              // und zur Seite
                 translate <0, 0.06, -0.08>
             }
             sphere { <-0.04, 0.02, 0.105>, 0.013 pigment { rgb 0.02 } }    // Augen
@@ -786,13 +752,13 @@ union {
             translate y * 1.66
         }
 
-        // Beim Joggen lehnt man sich leicht nach vorne
+        // Beim Joggen lehnt man sich bisschen nach vorne
         rotate x * 6
     }
 #end
 
-// --- Maennchen in die Szene setzen:
-// erst wippen, dann in Laufrichtung drehen, dann an die Position auf dem Weg.
+// Und jetzt kommt sie in die Szene: erst wippen, dann in Laufrichtung
+// drehen, dann auf den Weg schieben. Reihenfolge ist wichtig!
 object {
     Maennchen(Phase)
     translate y * Wippen
