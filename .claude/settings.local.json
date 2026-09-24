@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp /root/.claude/uploads/857763b8-8789-5cbb-bdd4-a21b94420114/c06c6618-movement.pov movement_original.pov)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Add upgraded car animation scene, quickres presets and README *)",
+      "Bash(git push *)"
+    ]
+  }
+}
